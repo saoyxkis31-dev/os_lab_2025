@@ -7,16 +7,26 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define SERV_PORT 10050
-#define BUFSIZE 100
+
 #define SADDR struct sockaddr
 
-int main() {
+
+int main(int argc, char *argv[]) {
+  if (argc != 3) {
+    printf("usage: %s <port> <bufsize>\n", argv[0]);
+    exit(1);
+  }
+
+  int serv_port = atoi(argv[1]);
+  int bufsize = atoi(argv[2]);
+
   const size_t kSize = sizeof(struct sockaddr_in);
 
   int lfd, cfd;
   int nread;
-  char buf[BUFSIZE];
+
+  // bufsize вместо константы
+  char buf[bufsize];
   struct sockaddr_in servaddr;
   struct sockaddr_in cliaddr;
 
@@ -28,7 +38,8 @@ int main() {
   memset(&servaddr, 0, kSize);
   servaddr.sin_family = AF_INET;
   servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  servaddr.sin_port = htons(SERV_PORT);
+  // переменная serv_port
+  servaddr.sin_port = htons(serv_port);
 
   if (bind(lfd, (SADDR *)&servaddr, kSize) < 0) {
     perror("bind");
@@ -49,7 +60,8 @@ int main() {
     }
     printf("connection established\n");
 
-    while ((nread = read(cfd, buf, BUFSIZE)) > 0) {
+    // read порциями по bufsize
+    while ((nread = read(cfd, buf, bufsize)) > 0) {
       write(1, &buf, nread);
     }
 
